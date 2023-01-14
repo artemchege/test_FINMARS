@@ -1,31 +1,15 @@
-import json
-
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from url_filter.integrations.drf import DjangoFilterBackend
 
+from investment.mixins import FilterCustomAttrsMixin
 from investment.renderers import TransactionCSVRenderer
 from investment.serializers import PortfolioSerializer, TransactionSerializer, CurrencySerializer, InstrumentSerializer, \
     AccountSerializer
 from investment.models import Portfolio, Transaction, Currency, Instrument, Account
-
-
-class FilterCustomAttrsMixin(GenericViewSet):
-    """ Миксин, который применяется для viewsets и позволяет делать гибкие и сложные фильтрации по JSONFIELD с именем
-    custom_attrs"""
-
-    def get_queryset(self):
-        queryset = self.queryset
-        filter_string = self.request.query_params.get('custom_attrs')
-
-        if filter_string:
-            filter_dictionary = json.loads(filter_string)
-            queryset = queryset.filter(**filter_dictionary)
-
-        return queryset
 
 
 class PortfolioViewSet(FilterCustomAttrsMixin, ModelViewSet):
@@ -33,7 +17,7 @@ class PortfolioViewSet(FilterCustomAttrsMixin, ModelViewSet):
     serializer_class = PortfolioSerializer
     queryset = Portfolio.objects.all()
     filter_backends = [DjangoFilterBackend]
-    filter_fields = ['id', 'name', 'notes', 'strategy', 'custom_attrs']
+    filter_fields = ['id', 'name', 'notes', 'strategy']
 
 
 class TransactionViewSet(FilterCustomAttrsMixin, ModelViewSet):
@@ -42,7 +26,7 @@ class TransactionViewSet(FilterCustomAttrsMixin, ModelViewSet):
     queryset = Transaction.objects.all().prefetch_related('currency', 'instrument', 'portfolio', 'account')
     filter_backends = [DjangoFilterBackend]
     filter_fields = ['id', 'transaction_date', 'type', 'amount', 'price', 'currency', 'instrument', 'portfolio',
-                     'account', 'notes', 'custom_attrs']
+                     'account', 'notes']
 
     @action(detail=False, methods=["get"], renderer_classes=[TransactionCSVRenderer])
     def get_transaction_csv(self, request):
@@ -72,7 +56,7 @@ class CurrencyViewSet(FilterCustomAttrsMixin, ModelViewSet):
     serializer_class = CurrencySerializer
     queryset = Currency.objects.all()
     filter_backends = [DjangoFilterBackend]
-    filter_fields = ['id', 'name', 'code', 'custom_attrs']
+    filter_fields = ['id', 'name', 'code']
 
 
 class InstrumentViewSet(FilterCustomAttrsMixin, ModelViewSet):
@@ -80,8 +64,7 @@ class InstrumentViewSet(FilterCustomAttrsMixin, ModelViewSet):
     serializer_class = InstrumentSerializer
     queryset = Instrument.objects.all()
     filter_backends = [DjangoFilterBackend]
-    filter_fields = ['id', 'currency', 'name', 'isin', 'description', 'maturity_date', 'accrual_size', 'accrual_date',
-                     'custom_attrs']
+    filter_fields = ['id', 'currency', 'name', 'isin', 'description', 'maturity_date', 'accrual_size', 'accrual_date']
 
 
 class AccountViewSet(FilterCustomAttrsMixin, ModelViewSet):
@@ -89,7 +72,7 @@ class AccountViewSet(FilterCustomAttrsMixin, ModelViewSet):
     serializer_class = AccountSerializer
     queryset = Account.objects.all()
     filter_backends = [DjangoFilterBackend]
-    filter_fields = ['id', 'name', 'type', 'user', 'custom_attrs']
+    filter_fields = ['id', 'name', 'type', 'user']
 
     def get_queryset(self):
         queryset = super().get_queryset()

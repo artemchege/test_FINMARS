@@ -8,10 +8,14 @@
 3. Поставить nginx на входе, накатить корсы и тд. Не спрашивали, но минута делов.  
 
 ### Как работает поиск по атрибутам моделек:
-Через библиотеку django-url-filter, из коробки поддерживает все Django ORM lookups, а также хождение по связям. 
+Через библиотеку django-url-filter, из коробки поддерживает все Django ORM lookups, а также хождение по связям. Пример: 
+
+    http://127.0.0.1:8000/investment/portfolio?id__lt=2
 
 ### Как работает поиск по кастомным атрибутам объектов (custom_attrs): 
-Используется поиск по JSONField, поддержиаются все lookups для данного поля по умолчанию (gt, gte, lt, lte, icontains и тд). 
+Используется поиск по JSONField, поддержиаются все lookups для данного поля по умолчанию (gt, gte, lt, lte, icontains и тд). Пример: 
+
+    http://127.0.0.1:8000/investment/portfolio?id__lt=1&custom_attrs={"custom_attrs__name":"Bob"}
 
 ### Как завести: 
 Клонирование проекта и после docker-compose up -d --build
