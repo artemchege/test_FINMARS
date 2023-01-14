@@ -1,15 +1,13 @@
-import codecs
-import csv
 import json
 
 from django.contrib.auth.models import AnonymousUser
-from django.http import HttpResponse
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from url_filter.integrations.drf import DjangoFilterBackend
 
+from investment.renderers import TransactionCSVRenderer
 from investment.serializers import PortfolioSerializer, TransactionSerializer, CurrencySerializer, InstrumentSerializer, \
     AccountSerializer
 from investment.models import Portfolio, Transaction, Currency, Instrument, Account
@@ -39,45 +37,29 @@ class PortfolioViewSet(FilterCustomAttrsMixin, ModelViewSet):
 
 
 class TransactionViewSet(FilterCustomAttrsMixin, ModelViewSet):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
     queryset = Transaction.objects.all().prefetch_related('currency', 'instrument', 'portfolio', 'account')
     filter_backends = [DjangoFilterBackend]
     filter_fields = ['id', 'transaction_date', 'type', 'amount', 'price', 'currency', 'instrument', 'portfolio',
                      'account', 'notes', 'custom_attrs']
 
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["get"], renderer_classes=[TransactionCSVRenderer])
     def get_transaction_csv(self, request):
-        response = HttpResponse(content_type="text/csv")
+        content = [
+            {
+                'transaction': transaction.type,
+                'instrument': transaction.instrument.name,
+                'amount': transaction.amount,
+                'price': transaction.price,
+                'currency': transaction.currency.code,
+                'portfolio': transaction.portfolio.name,
+                'account': transaction.account.name,
+             }
+            for transaction in self.queryset]
+
+        response = Response(content, content_type='text/csv')
         response["Content-Disposition"] = "attachment; filename=transactions.csv"
-        response.write(codecs.BOM_UTF8)
-        writer = csv.writer(response)
-
-        writer.writerow(
-            [
-                "transaction",
-                "instrument",
-                "amount",
-                "price",
-                "currency",
-                "portfolio",
-                "account",
-            ]
-        )
-
-        for transaction in self.queryset:
-            writer.writerow(
-                [
-                    transaction.type,
-                    transaction.instrument.name,
-                    transaction.amount,
-                    transaction.price,
-                    transaction.currency.code,
-                    transaction.portfolio.name,
-                    transaction.account.name,
-                ]
-            )
-
         return response
 
     def get_queryset(self):

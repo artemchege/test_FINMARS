@@ -11,6 +11,7 @@ django-filter==22.1
 django-url-filter==0.3.15
 django-utils-six==2.0
 djangorestframework==3.14.0
+djangorestframework-csv==2.1.1
 djangorestframework-simplejwt==5.2.2
 drf-yasg==1.21.4
 enum-compat==0.0.3
@@ -28,5 +29,6 @@ ruamel.yaml==0.17.21
 ruamel.yaml.clib==0.2.7
 six==1.16.0
 sqlparse==0.4.3
+unicodecsv==0.14.1
 uritemplate==4.1.1
 urllib3==1.26.14
